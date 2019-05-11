@@ -36,11 +36,13 @@ def svm_loss_naive(W, X, y, reg):
             margin = scores[j] - correct_class_score + 1 # note delta = 1
             if margin > 0:
                 loss += margin
+                dW[:, y[i]] += -X[i, :]
+                dW[:, j] += X[i, :]
 
     # Right now the loss is a sum over all training examples, but we want it
     # to be an average instead so we divide by num_train.
     loss /= num_train
-
+    dW /= num_train
     # Add regularization to the loss.
     loss += reg * np.sum(W * W)
 
@@ -54,7 +56,7 @@ def svm_loss_naive(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    dW += reg * W
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     
@@ -78,7 +80,14 @@ def svm_loss_vectorized(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    scores = X.dot(W)      
+    num_train = X.shape[0]
+    num_classes = W.shape[1]
+    scores_correct = scores[np.arange(num_train), y]  
+    scores_correct = np.reshape(scores_correct, (num_train, 1))
+    margins = scores - scores_correct + 1.0   
+    margins[np.arange(num_train), y] = 0.0
+    margins[margins <= 0] = 0.0
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -93,7 +102,14 @@ def svm_loss_vectorized(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+        
+    loss += np.sum(margins) / num_train
+    loss += 0.5 * reg * np.sum(W * W)
+    # compute the gradient
+    margins[margins > 0] = 1.0
+    row_sum = np.sum(margins, axis=1)                  
+    margins[np.arange(num_train), y] = -row_sum        
+    dW += np.dot(X.T, margins)/num_train + reg * W    
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
